@@ -2,15 +2,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 import requests
 import os
+from config import TELEGRAM_BOT_TOKEN, GOOGLE_API_KEY, SERPAPI_KEY, SEARCH_ENGINE_ID
 from user_data import get_user_requests, update_user_requests, user_paid
 from payments import get_payment_message
-
-# Загружаем API-ключи из переменных окружения
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")
-USDT_TON_WALLET = os.getenv("USDT_TON_WALLET")
 
 # Функция поиска по фото
 async def search_google_by_image(image_url):
@@ -22,7 +16,7 @@ async def search_google_by_image(image_url):
 async def search_prices_on_google(product_name):
     url = f"https://serpapi.com/search.json?q={product_name}&tbm=shop&api_key={SERPAPI_KEY}"
     response = requests.get(url).json()
-    return [(item["title"], item["link"], item["price"]) for item in response.get("shopping_results", [])]
+    return [(item["title"], item["link"], item.get("price", "Цена не указана")) for item in response.get("shopping_results", [])]
 
 # Обработка команды /start
 async def start(update: Update, context):
@@ -51,11 +45,16 @@ async def handle_photo(update: Update, context):
 
     update_user_requests(user_id)
 
+    # Загружаем фото
     photo = await update.message.photo[-1].get_file()
     image_url = photo.file_path
-    await update.message.reply_text("🔍 Ищу товары по фото...")
+    await update.message.reply_text(f"🔍 Загружено фото, URL: {image_url}\nИщу товары...")
 
+    # Поиск по фото
     results = await search_google_by_image(image_url)
+
+    # Отладка - проверяем, что вернул поиск
+    print("Результаты поиска:", results)
 
     if results:
         keyboard = [
@@ -92,4 +91,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
