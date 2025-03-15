@@ -1,3 +1,12 @@
+import os
+
+token = os.getenv("TELEGRAM_BOT_TOKEN")
+
+if not token:
+    raise ValueError("❌ Ошибка: переменная TELEGRAM_BOT_TOKEN не установлена!")
+
+print(f"✅ Успех! Токен: {token[:10]}******")
+
 import logging
 import json
 import requests
